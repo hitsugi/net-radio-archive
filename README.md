@@ -26,20 +26,25 @@ Net Radio Archive
 - LinuxなどUNIX的なOS (Windowsでも動かしたい...)
 - Ruby 2.0 or higher
 - rtmpdump
-- ffmpeg or livav
 - swftools
+- あたらしめのffmpeg (HTTP Live Streaming の input に対応しているもの)
+ - ※最新のffmpegの導入は面倒であることが多いです。自分はLinuxではstatic buildを使っています。 http://qiita.com/yayugu/items/d7f6a15a6f988064f51c
+ - Macではhomebrewで導入できるバージョンで問題ありません
 - (AG-ONのみ)
  - GUI環境 or xvfb
  - firefox
- - とてもあたらしいffmpeg (HTTP Live Streaming の input に対応しているもの)
-  - ※最新のffmpegの導入は面倒であることが多いです。自分はLinux用のstatic buildを使っています。 http://qiita.com/yayugu/items/d7f6a15a6f988064f51c
 
 ## セットアップ
 
 ```
 # 必要なライブラリをインストール
 # Ubuntuの場合:
-$ sudo apt-get install rtmpdump libav-tools swftools ruby
+$ sudo apt-get install rtmpdump swftools ruby
+
+$ # libavがインストールされている場合には削除してから
+$ wget http://johnvansickle.com/ffmpeg/releases/ffmpeg-release-64bit-static.tar.xz
+$ tar xvf ffmpeg-release-64bit-static.tar.xz
+$ sudo cp ./ffmpeg-release-64bit-static/ffmpeg /usr/local/bin
 
 $ git clone https://github.com/yayugu/net-radio-archive.git
 $ cd net-radio-archive
@@ -54,15 +59,15 @@ $ vi config/settings.yml # 各自の環境に合わせて編集
 
 # サーバー内での手動設定 (お手軽、自分はこれでやってます)
 $ RAILS_ENV=production bundle exec rake db:create db:migrate
-$ bundle exec whenever --update-crontab
-$ # (または) bundle exec whenever -u $YOUR-USERNAME --update-crontab
+$ RAILS_ENV=production bundle exec whenever --update-crontab
+$ # (または) RAILS_ENV=production bundle exec whenever -u $YOUR-USERNAME --update-crontab
 
 # アップデート
 $ git pull origin master
 $ git submodule update --init --recursive
 $ bundle install --without development test
 $ RAILS_ENV=production bundle exec rake db:migrate
-$ bundle exec whenever --update-crontab
+$ RAILS_ENV=production bundle exec whenever --update-crontab
 
 # capistranoでのデプロイ設定
 $ cp config/deploy/production.example.rb config/deploy/production.rb
@@ -96,3 +101,13 @@ A. 難しいです。Githubでissueつくっていただければ相談にのり
 gitで最新のソースを取得してきてビルドすると改善することが多いです。
 
 http://qiita.com/yayugu/items/12c0ffd92bc8539098b8
+
+### Q. 録画がはじまらない / 特定のプラットフォーム or 局のみ録画がはじまらない
+番組表の取得がまだ行われていない可能性があります。 config/schedule.rbを見ていただけるとわかるのですが番組表の取得は昼間中心となっています。お急ぎの場合は手動で
+
+```
+$ RAILS_ENV=production bundle exec rake main:XXXX_scrape
+```
+
+を実行してください
+
